@@ -1,5 +1,6 @@
 use serde_json::json;
 use std::error::Error;
+use std::env::args;
 
 
 use crate::{git::{diff, get_changed_files, open_repo}, schemas::{ChatResponse, UserMessage}};
@@ -10,7 +11,7 @@ mod schemas;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let repo_path = String::from(".");
+    let repo_path = args().nth(2).expect("no repository path given");
     let repo = open_repo(&repo_path);
 
     let mut files: Vec<String> = Vec::new();
