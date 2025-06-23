@@ -23,9 +23,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
             });
         });
 
-
-    println!("{}",files[0]);
-
     if !files.is_empty() {
         let system_msg = UserMessage {
             role: "system".to_string(),
@@ -66,7 +63,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             "stream": false
         });
 
-        println!("Sending JSON:\n{}", serde_json::to_string_pretty(&request_payload).unwrap());
+        // println!("Sending JSON:\n{}", serde_json::to_string_pretty(&request_payload).unwrap());
 
         let client = reqwest::Client::new();
 
@@ -78,8 +75,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
             .json()
             .await?;
 
-        let raw_content = &response.choices[0].message.content;
-        println!("{}", raw_content);
+        let raw_response = &response.choices[0].message.content;
+        println!("{}", raw_response);
     };
 
     Ok(())
