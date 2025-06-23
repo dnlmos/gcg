@@ -5,8 +5,8 @@ use std::error::Error;
 use crate::{git::{diff, get_changed_files, open_repo}, schemas::{ChatResponse, UserMessage}};
 
 mod git;
-
 mod schemas;
+
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -22,6 +22,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
                 files.push(changed_file.display().to_string());
             });
         });
+
+
+    println!("{}",files[0]);
 
     if !files.is_empty() {
         let system_msg = UserMessage {
@@ -63,7 +66,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             "stream": false
         });
 
-        // println!("Sending JSON:\n{}", serde_json::to_string_pretty(&request_payload).unwrap());
+        println!("Sending JSON:\n{}", serde_json::to_string_pretty(&request_payload).unwrap());
 
         let client = reqwest::Client::new();
 
@@ -74,7 +77,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
             .await?
             .json()
             .await?;
-
 
         let raw_content = &response.choices[0].message.content;
         println!("{}", raw_content);

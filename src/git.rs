@@ -1,4 +1,4 @@
-use git2::{DiffOptions, Error, Repository};
+use git2::{DiffFormat, DiffOptions, Error, Repository};
 use std::path::{Path, PathBuf};
 
 pub fn open_repo(repo_path: &String) -> Repository {
@@ -8,17 +8,29 @@ pub fn open_repo(repo_path: &String) -> Repository {
 pub fn diff(repo: &Repository, files: &[String]) -> Result<String, git2::Error> {
     let mut ret = String::new();
     let idx = repo.index()?;
+    let files: Vec<_> = files.iter().map(|f| Path::new(f)).collect();
 
-    let head = match repo.head() {
-        Ok(h) => Some(h.peel_to_tree()?),
+    // Get HEAD tree (if any)
+    let head_tree = match repo.head() {
+        Ok(head) => Some(head.peel_to_tree()?),
         Err(_) => None,
     };
 
-    let diff = repo.diff_tree_to_index(head.as_ref(), Some(&idx), None)?;
+    // 1. Diff HEAD -> Index (staged changes)
+    let staged_diff = repo.diff_tree_to_index(head_tree.as_ref(), Some(&idx), None)?;
+    staged_diff.print(DiffFormat::Patch, |delta, _, line| {
+        if let Some(path) = delta.new_file().path() {
+            if files.iter().any(|f| path.ends_with(f)) {
+                ret.push(line.origin());
+                ret.push_str(std::str::from_utf8(line.content()).unwrap_or(""));
+            }
+        }
+        true
+    })?;
 
-    let files: Vec<_> = files.iter().map(|f| Path::new(f)).collect();
-
-    diff.print(git2::DiffFormat::Patch, |delta, _, line| {
+    // 2. Diff Index -> Workdir (unstaged changes)
+    let unstaged_diff = repo.diff_index_to_workdir(Some(&idx), None)?;
+    unstaged_diff.print(DiffFormat::Patch, |delta, _, line| {
         if let Some(path) = delta.new_file().path() {
             if files.iter().any(|f| path.ends_with(f)) {
                 ret.push(line.origin());
