@@ -1,8 +1,8 @@
 use git2::{DiffOptions, Error, Repository};
 use std::path::{Path, PathBuf};
 
-pub fn open_repo(repo_path: &String) -> Result<Repository, Error> {
-    Repository::open(repo_path)
+pub fn open_repo(repo_path: &String) -> Repository {
+    Repository::open(repo_path).unwrap()
 }
 
 pub fn diff(repo: &Repository, files: &[String]) -> Result<String, git2::Error> {
