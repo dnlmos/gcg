@@ -1,7 +1,14 @@
-use std::{env, error::Error};
+#![feature(iter_intersperse)]
+
+use std::{env, path::PathBuf, process};
+
+use anyhow::{Result, anyhow};
+use clap::Parser;
+use log::debug;
+use reqwest::blocking as reqwest;
 
 use crate::{
-    git::{diff, get_changed_files, open_repo},
+    git::{Repository, diff, get_changed_files},
     requests::{handle_gemini_request, handle_openai_request},
     schemas::UserMessage,
 };
@@ -10,48 +17,74 @@ mod git;
 mod requests;
 mod schemas;
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> Result<()> {
+    env_logger::init();
+    if let Err(e) = dotenv::dotenv()
+        && !e.not_found()
+    {
+        return Err(anyhow!(e));
+    }
+    let args = Args::parse();
+
     // if path not provided, use current working dir
-    let repo_path = env::args().nth(1).unwrap_or_else(|| {
-        env::current_dir()
-            .expect("Failed to get current directory")
-            .to_string_lossy()
-            .to_string()
-    });
-    let repo = open_repo(&repo_path);
+    let repo_path = args.path.map(Ok).unwrap_or_else(env::current_dir)?;
+    let repo = Repository::open(repo_path)?;
 
-    let use_gemini = true;
+    let files = get_changed_files(&repo)?;
 
-    let mut files: Vec<String> = Vec::new();
+    if files.is_empty() {
+        eprintln!("Repository has no pending changes.");
+        process::exit(2);
+    }
 
-    get_changed_files(&repo).iter().for_each(|path_bufs| {
-        path_bufs.iter().for_each(|changed_file| {
-            files.push(changed_file.display().to_string());
-        });
-    });
-
-    if !files.is_empty() {
-        let system_msg = UserMessage {
-            role: "system".to_string(),
-            content:
-                "You are an AI assistant that generates concise, short and clear Git commit messages from code diffs: \n".to_string(),
-        };
-
-        let send_msg = UserMessage {
+    let messages = vec![
+        UserMessage {
+            role: format!("system"),
+            content: format!(
+                "You are an AI assistant that generates concise, short and clear Git commit messages from code diffs: \n"
+            ),
+        },
+        UserMessage {
             role: "user".to_string(),
-            content: diff(&repo, &files).unwrap(),
-        };
+            content: diff(&repo, &files)?,
+        },
+    ];
 
-        let messages: Vec<UserMessage> = vec![system_msg, send_msg];
+    debug!(
+        "Sending JSON:\n{}",
+        serde_json::to_string_pretty(&messages)?
+    );
 
-        let client = reqwest::Client::new();
-        if use_gemini {
-            handle_gemini_request(&client, &messages).await?;
-        } else {
-            handle_openai_request(&client, &messages).await?;
-        }
-        // println!("Sending JSON:\n{}", serde_json::to_string_pretty(&request_payload).unwrap());
+    let client = reqwest::Client::new();
+    if args.provider.gemini {
+        handle_gemini_request(&client, &messages)?;
+    } else {
+        handle_openai_request(&client, &args.provider.openai_api, &messages)?;
     }
     Ok(())
+}
+
+/// Generates commit message for current changes in a git repository.
+#[derive(Debug, clap::Parser)]
+#[command(version)]
+struct Args {
+    /// Path to git repository
+    path: Option<PathBuf>,
+    #[command(flatten)]
+    provider: Provider,
+}
+
+#[derive(Debug, clap::Args)]
+#[group(multiple = false)]
+struct Provider {
+    /// Use Gemini
+    #[arg(long)]
+    gemini: bool,
+    /// Use OpenAI-compatible API
+    #[arg(
+        long = "openai-api",
+        id = "URL",
+        default_value = "http://127.0.0.1:11434/v1"
+    )]
+    openai_api: String,
 }
