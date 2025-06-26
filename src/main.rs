@@ -1,33 +1,40 @@
+use dotenv::dotenv;
 use serde_json::json;
-use std::error::Error;
-use std::env::args;
+use std::{env, error::Error};
 
-
-use crate::{git::{diff, get_changed_files, open_repo}, schemas::{ChatResponse, UserMessage}};
+use crate::schemas::GeminiResponse;
+use crate::{
+    git::{diff, get_changed_files, open_repo},
+    schemas::{ChatResponse, UserMessage},
+};
 
 mod git;
 mod schemas;
 
-
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let repo_path = args().nth(2).expect("no repository path given");
+    let repo_path = env::args().nth(1).unwrap_or_else(|| {
+        env::current_dir()
+            .expect("Failed to get current directory")
+            .to_string_lossy()
+            .to_string()
+    });
     let repo = open_repo(&repo_path);
+
+    let use_gemini = true;
 
     let mut files: Vec<String> = Vec::new();
 
-    get_changed_files(&repo)
-        .iter()
-        .for_each(|path_bufs| {
-            path_bufs.iter().for_each(|changed_file| {
-                files.push(changed_file.display().to_string());
-            });
+    get_changed_files(&repo).iter().for_each(|path_bufs| {
+        path_bufs.iter().for_each(|changed_file| {
+            files.push(changed_file.display().to_string());
         });
+    });
 
     if !files.is_empty() {
         let system_msg = UserMessage {
             role: "system".to_string(),
-            content: 
+            content:
                 "You are an AI assistant that generates concise, short and clear Git commit messages from code diffs: \n".to_string(),
         };
 
@@ -40,44 +47,79 @@ async fn main() -> Result<(), Box<dyn Error>> {
         messages.push(system_msg);
         messages.push(send_msg);
 
-        let request_payload = json!({
-            "model": "{{model}}",
-            "messages": messages,
-            "response_format": {
-                "type": "json_schema",
-                "json_schema": {
-                    "name": "commit_response",
-                    "strict": "true",
-                    "schema": {
-                        "type": "object",
-                        "properties": {
-                            "message": {
-                                "type": "string"
-                            }
-                        },
-                        "required": ["message"]
-                    }
-                }
-            },
-            "temperature": 0.7,
-            "max_tokens": 50,
-            "stream": false
-        });
-
-        // println!("Sending JSON:\n{}", serde_json::to_string_pretty(&request_payload).unwrap());
-
         let client = reqwest::Client::new();
 
-        let response: ChatResponse = client
-            .post("http://127.0.0.1:1234/v1/chat/completions")
-            .json(&request_payload)
-            .send()
-            .await?
-            .json()
-            .await?;
+        if use_gemini {
+            let msgs = messages
+                .iter()
+                .map(|msg| msg.content.as_str())
+                .collect::<Vec<_>>()
+                .join("\n");
 
-        let raw_response = &response.choices[0].message.content;
-        println!("{}", raw_response);
+            let request_payload = json!({
+                  "contents": [
+                    {
+                      "parts": [
+                        {
+                          "text": msgs
+                        }
+
+                      ]
+                    }
+                  ],
+            });
+
+            dotenv().ok();
+            let api_key = env::var("GEMINI_API_KEY")?;
+
+            let response: GeminiResponse= client
+                .post(format!("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={}",api_key))
+                .json(&request_payload)
+                .send()
+                .await?
+                .json()
+                .await?;
+
+            let raw_response = &response.candidates[0].content.parts[0].text;
+            println!("{}", raw_response);
+        } else {
+            let request_payload = json!({
+                "model": "{{model}}",
+                "messages": messages,
+                "response_format": {
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "commit_response",
+                        "strict": "true",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": ["message"]
+                        }
+                    }
+                },
+                "temperature": 0.7,
+                "max_tokens": 50,
+                "stream": false
+            });
+
+            let response: ChatResponse = client
+                .post("http://127.0.0.1:1234/v1/chat/completions")
+                .json(&request_payload)
+                .send()
+                .await?
+                .json()
+                .await?;
+
+            let raw_response = &response.choices[0].message.content;
+            println!("{}", raw_response);
+        }
+
+        // println!("Sending JSON:\n{}", serde_json::to_string_pretty(&request_payload).unwrap());
     };
 
     Ok(())

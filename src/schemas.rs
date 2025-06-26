@@ -19,3 +19,23 @@ pub struct UserMessage {
     pub role: String,
     pub content: String,
 }
+
+#[derive(Deserialize)]
+pub struct GeminiResponse {
+    pub candidates: Vec<Candidate>,
+}
+
+#[derive(Deserialize)]
+pub struct Candidate {
+    pub content: Content,
+}
+
+#[derive(Deserialize)]
+pub struct Content {
+    pub parts: Vec<Part>,
+}
+
+#[derive(Deserialize)]
+pub struct Part {
+    pub text: String,
+}
