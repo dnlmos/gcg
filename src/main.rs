@@ -4,7 +4,7 @@ use std::{env, error::Error};
 
 use crate::{
     git::{diff, get_changed_files, open_repo},
-    schemas::{ChatResponse, GeminiResponse, UserMessage},
+    schemas::{GeminiResponse, OpenAIResponse, UserMessage},
 };
 
 mod git;
@@ -123,7 +123,7 @@ async fn handle_openai_request(
         "stream": false
     });
 
-    let response: ChatResponse = client
+    let response: OpenAIResponse = client
         .post("http://127.0.0.1:1234/v1/chat/completions")
         .json(&request_payload)
         .send()

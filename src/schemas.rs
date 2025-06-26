@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 #[derive(Deserialize)]
-pub struct ChatResponse {
+pub struct OpenAIResponse {
     pub choices: Vec<ChatChoice>,
 }
 
