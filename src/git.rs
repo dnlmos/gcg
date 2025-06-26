@@ -1,14 +1,11 @@
-use git2::{DiffFormat, DiffOptions, Error, Repository};
+use git2::{DiffFormat, DiffOptions, Error};
 use std::path::{Path, PathBuf};
 
-pub fn open_repo(repo_path: &String) -> Repository {
-    Repository::open(repo_path).unwrap()
-}
+pub use git2::Repository;
 
-pub fn diff(repo: &Repository, files: &[String]) -> Result<String, git2::Error> {
+pub fn diff(repo: &Repository, files: &[impl AsRef<Path>]) -> Result<String, git2::Error> {
     let mut ret = String::new();
     let idx = repo.index()?;
-    let files: Vec<_> = files.iter().map(|f| Path::new(f)).collect();
 
     // Get HEAD tree (if any)
     let head_tree = match repo.head() {

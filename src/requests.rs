@@ -1,53 +1,40 @@
-use dotenv::dotenv;
+use std::env;
+
+use anyhow::{Result, anyhow};
+use reqwest::blocking as reqwest;
 use serde_json::json;
-use std::{env, error::Error};
 
 use crate::schemas::{GeminiResponse, OpenAIResponse, UserMessage};
-pub async fn handle_gemini_request(
-    client: &reqwest::Client,
-    messages: &[UserMessage],
-) -> Result<(), Box<dyn Error>> {
+
+pub fn handle_gemini_request(client: &reqwest::Client, messages: &[UserMessage]) -> Result<()> {
     let msgs = messages
         .iter()
-        .map(|msg| msg.content.as_str())
-        .collect::<Vec<_>>()
-        .join("\n");
+        .map(|msg| &*msg.content)
+        .intersperse("\n")
+        .collect::<String>();
 
-    let request_payload = json!({
-          "contents": [
-            {
-              "parts": [
-                {
-                  "text": msgs
-                }
+    let request_payload = json!({ "contents": [{"parts": [{ "text": msgs }] }] });
 
-              ]
-            }
-          ],
-    });
-
-    dotenv().ok();
     let api_key = env::var("GEMINI_API_KEY")?;
 
     let response: GeminiResponse= client
-                .post(format!("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={}",api_key))
-                .json(&request_payload)
-                .send()
-                .await?
-                .json()
-                .await?;
+        .post(format!("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={}",api_key))
+        .json(&request_payload)
+        .send()?
+        .json()?;
 
     let raw_response = &response.candidates[0].content.parts[0].text;
     println!("{}", raw_response);
     Ok(())
 }
 
-pub async fn handle_openai_request(
+pub fn handle_openai_request(
     client: &reqwest::Client,
+    api: &str,
     messages: &[UserMessage],
-) -> Result<(), Box<dyn Error>> {
+) -> Result<()> {
     let request_payload = json!({
-        "model": "{{model}}",
+        "model": "default",
         "messages": messages,
         "response_format": {
             "type": "json_schema",
@@ -70,15 +57,23 @@ pub async fn handle_openai_request(
         "stream": false
     });
 
-    let response: OpenAIResponse = client
-        .post("http://127.0.0.1:1234/v1/chat/completions")
+    let response = client
+        .post(format!("{api}/chat/completions"))
         .json(&request_payload)
-        .send()
-        .await?
-        .json()
-        .await?;
+        .send()?;
 
-    let raw_response = &response.choices[0].message.content;
-    println!("{}", raw_response);
+    if !response.status().is_success() {
+        return Err(anyhow!(
+            "OpenAI API request failed: {} - {}",
+            response.status(),
+            response.text()?
+        ));
+    }
+
+    let response = &response.json::<OpenAIResponse>()?.choices[0]
+        .message
+        .content;
+
+    println!("{response}");
     Ok(())
 }
