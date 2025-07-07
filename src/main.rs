@@ -1,7 +1,9 @@
-use std::{env, error::Error};
+use anyhow::Result;
+use reqwest::blocking::Client;
+use std::env;
 
 use crate::{
-    git::{diff, get_changed_files, open_repo},
+    git::{Repository, diff, get_changed_files},
     requests::{handle_gemini_request, handle_openai_request},
     schemas::UserMessage,
 };
@@ -10,8 +12,7 @@ mod git;
 mod requests;
 mod schemas;
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> Result<()> {
     // if path not provided, use current working dir
     let repo_path = env::args().nth(1).unwrap_or_else(|| {
         env::current_dir()
@@ -19,12 +20,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
             .to_string_lossy()
             .to_string()
     });
-    let repo = open_repo(&repo_path);
+    let repo = Repository::open(repo_path).unwrap();
 
     let use_gemini = true;
 
     let mut files: Vec<String> = Vec::new();
-
     get_changed_files(&repo).iter().for_each(|path_bufs| {
         path_bufs.iter().for_each(|changed_file| {
             files.push(changed_file.display().to_string());
@@ -43,13 +43,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
             content: diff(&repo, &files).unwrap(),
         };
 
-        let messages: Vec<UserMessage> = vec![system_msg, send_msg];
+        let messages = vec![system_msg, send_msg];
 
-        let client = reqwest::Client::new();
+        let client = Client::new();
         if use_gemini {
-            handle_gemini_request(&client, &messages).await?;
+            let _ = handle_gemini_request(&client, &messages);
         } else {
-            handle_openai_request(&client, &messages).await?;
+            let _ = handle_openai_request(&client, &messages);
         }
         // println!("Sending JSON:\n{}", serde_json::to_string_pretty(&request_payload).unwrap());
     }

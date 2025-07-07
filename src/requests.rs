@@ -1,51 +1,36 @@
+use anyhow::Result;
 use dotenv::dotenv;
 use serde_json::json;
-use std::{env, error::Error};
+use std::env;
 
 use crate::schemas::{GeminiResponse, OpenAIResponse, UserMessage};
-pub async fn handle_gemini_request(
-    client: &reqwest::Client,
-    messages: &[UserMessage],
-) -> Result<(), Box<dyn Error>> {
+
+use reqwest::blocking::Client;
+pub fn handle_gemini_request(client: &Client, messages: &[UserMessage]) -> Result<()> {
     let msgs = messages
         .iter()
-        .map(|msg| msg.content.as_str())
+        .map(|msg| msg.content.to_string())
         .collect::<Vec<_>>()
         .join("\n");
 
-    let request_payload = json!({
-          "contents": [
-            {
-              "parts": [
-                {
-                  "text": msgs
-                }
-
-              ]
-            }
-          ],
-    });
+    let request_payload = json!({ "contents": [ { "parts": [ { "text": msgs } ] } ], });
 
     dotenv().ok();
     let api_key = env::var("GEMINI_API_KEY")?;
 
-    let response: GeminiResponse= client
-                .post(format!("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={}",api_key))
-                .json(&request_payload)
-                .send()
-                .await?
-                .json()
-                .await?;
+    let api_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=";
+    let response: GeminiResponse = client
+        .post(format!("{api_url}{api_key}"))
+        .json(&request_payload)
+        .send()?
+        .json()?;
 
     let raw_response = &response.candidates[0].content.parts[0].text;
     println!("{}", raw_response);
     Ok(())
 }
 
-pub async fn handle_openai_request(
-    client: &reqwest::Client,
-    messages: &[UserMessage],
-) -> Result<(), Box<dyn Error>> {
+pub fn handle_openai_request(client: &Client, messages: &[UserMessage]) -> Result<()> {
     let request_payload = json!({
         "model": "{{model}}",
         "messages": messages,
@@ -70,13 +55,13 @@ pub async fn handle_openai_request(
         "stream": false
     });
 
+    dotenv().ok();
+    let api_url = env::var("OPENAI_API_URL")?;
     let response: OpenAIResponse = client
-        .post("http://127.0.0.1:1234/v1/chat/completions")
+        .post(format!("{api_url}/v1/chat/completions"))
         .json(&request_payload)
-        .send()
-        .await?
-        .json()
-        .await?;
+        .send()?
+        .json()?;
 
     let raw_response = &response.choices[0].message.content;
     println!("{}", raw_response);

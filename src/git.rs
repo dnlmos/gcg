@@ -1,9 +1,6 @@
-use git2::{DiffFormat, DiffOptions, Error, Repository};
+pub use git2::Repository;
+use git2::{DiffFormat, DiffOptions, Error};
 use std::path::{Path, PathBuf};
-
-pub fn open_repo(repo_path: &String) -> Repository {
-    Repository::open(repo_path).unwrap()
-}
 
 pub fn diff(repo: &Repository, files: &[String]) -> Result<String, git2::Error> {
     let mut ret = String::new();
