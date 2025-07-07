@@ -6,6 +6,6 @@ If you want to use Gemini (free), create `.env` file with field
 ```
 GEMINI_API_KEY = "your api key"
 ```
-
+OPENAI_API_URL = "http://127.0.0.1:1234"
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
