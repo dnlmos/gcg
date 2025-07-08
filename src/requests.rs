@@ -1,12 +1,17 @@
 use anyhow::Result;
-use dotenv::dotenv;
 use serde_json::json;
-use std::env;
 
-use crate::schemas::{GeminiResponse, OpenAIResponse, UserMessage};
+use crate::{
+    Provider,
+    schemas::{GeminiResponse, OpenAIResponse, UserMessage},
+};
 
 use reqwest::blocking::Client;
-pub fn handle_gemini_request(client: &Client, messages: &[UserMessage]) -> Result<()> {
+pub fn handle_gemini_request(
+    client: &Client,
+    messages: &[UserMessage],
+    provider: Provider,
+) -> Result<()> {
     let msgs = messages
         .iter()
         .map(|msg| msg.content.to_string())
@@ -15,12 +20,14 @@ pub fn handle_gemini_request(client: &Client, messages: &[UserMessage]) -> Resul
 
     let request_payload = json!({ "contents": [ { "parts": [ { "text": msgs } ] } ], });
 
-    dotenv().ok();
-    let api_key = env::var("GEMINI_API_KEY")?;
+    let api_endpoint = if let Some(key) = &provider.api_key {
+        format!("{}{}", provider.api_url, key)
+    } else {
+        provider.api_url.clone()
+    };
 
-    let api_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=";
     let response: GeminiResponse = client
-        .post(format!("{api_url}{api_key}"))
+        .post(api_endpoint)
         .json(&request_payload)
         .send()?
         .json()?;
@@ -30,7 +37,11 @@ pub fn handle_gemini_request(client: &Client, messages: &[UserMessage]) -> Resul
     Ok(())
 }
 
-pub fn handle_openai_request(client: &Client, messages: &[UserMessage]) -> Result<()> {
+pub fn handle_openai_request(
+    client: &Client,
+    messages: &[UserMessage],
+    provider: Provider,
+) -> Result<()> {
     let request_payload = json!({
         "model": "{{model}}",
         "messages": messages,
@@ -55,10 +66,13 @@ pub fn handle_openai_request(client: &Client, messages: &[UserMessage]) -> Resul
         "stream": false
     });
 
-    dotenv().ok();
-    let api_url = env::var("OPENAI_API_URL")?;
+    // println!(
+    //     "Sending JSON:\n{}",
+    //     serde_json::to_string_pretty(&request_payload).unwrap()
+    // );
+
     let response: OpenAIResponse = client
-        .post(format!("{api_url}/v1/chat/completions"))
+        .post(provider.api_url)
         .json(&request_payload)
         .send()?
         .json()?;
