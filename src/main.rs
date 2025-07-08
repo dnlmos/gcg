@@ -1,6 +1,6 @@
 use anyhow::Result;
+use clap::Parser;
 use reqwest::blocking::Client;
-use std::env;
 
 use crate::{
     git::{Repository, diff, get_changed_files},
@@ -12,17 +12,22 @@ mod git;
 mod requests;
 mod schemas;
 
-fn main() -> Result<()> {
-    // if path not provided, use current working dir
-    let repo_path = env::args().nth(1).unwrap_or_else(|| {
-        env::current_dir()
-            .expect("Failed to get current directory")
-            .to_string_lossy()
-            .to_string()
-    });
-    let repo = Repository::open(repo_path).unwrap();
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    #[arg(short, long, default_value_t = String::from("."))]
+    repo_path: String,
+    #[arg(short, long, default_value_t = String::from("gemini"))]
+    provider: String,
+}
 
-    let use_gemini = true;
+fn main() -> Result<()> {
+    let args = Args::parse();
+
+    let repo_path = args.repo_path;
+    let provider = args.provider;
+
+    let repo = Repository::open(repo_path).unwrap();
 
     let mut files: Vec<String> = Vec::new();
     get_changed_files(&repo).iter().for_each(|path_bufs| {
@@ -46,7 +51,7 @@ fn main() -> Result<()> {
         let messages = vec![system_msg, send_msg];
 
         let client = Client::new();
-        if use_gemini {
+        if provider == "gemini" {
             let _ = handle_gemini_request(&client, &messages);
         } else {
             let _ = handle_openai_request(&client, &messages);
