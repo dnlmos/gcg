@@ -25,7 +25,7 @@ gcg is a fast and lightweight CLI tool written in **Rust** that uses **LLMs** to
 ```bash
 git clone https://github.com/daniel-mosko/gcg.git
 cd gcg
-cargo build --release
+cargo install --path .
 ```
 
 ## Set your API keys and endpoints:
