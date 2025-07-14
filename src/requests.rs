@@ -88,7 +88,7 @@ pub fn handle_ollama_request(
     provider: Provider,
 ) -> Result<()> {
     let request_payload = json!({
-        "model": "llama-3.2-3b-instruct:latest",
+        "model": provider.model,
         "prompt": format!("{}\n{}", messages[0].content, messages[1].content),
         "stream": false,
     });

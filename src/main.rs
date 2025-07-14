@@ -23,6 +23,8 @@ struct Args {
     repo_path: String,
     #[arg(short, long, default_value_t = String::from("gemini"))]
     provider: String,
+    #[arg(short, long, default_value_t = String::from("llama-3.2-3b-instruct:latest"))]
+    model: String,
 }
 
 #[derive(Clone)]
@@ -30,6 +32,7 @@ struct Provider {
     name: String,
     api_url: String,
     api_key: Option<String>,
+    model: Option<String>,
 }
 
 fn main() -> Result<()> {
@@ -49,6 +52,7 @@ fn main() -> Result<()> {
                 name: provider_name,
                 api_url: api_url,
                 api_key: Some(api_key),
+                model: None,
             }
         }
         "openai" => {
@@ -58,6 +62,7 @@ fn main() -> Result<()> {
                 name: provider_name,
                 api_url: api_url,
                 api_key: None,
+                model: None,
             }
         }
         "ollama" => {
@@ -67,6 +72,7 @@ fn main() -> Result<()> {
                 name: provider_name,
                 api_url: api_url,
                 api_key: None,
+                model: Some(String::from("llama-3.2-3b-instruct:latest")),
             }
         }
         _ => return Err(anyhow::anyhow!("Unknown provider: {}", provider_name)),
