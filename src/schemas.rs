@@ -40,3 +40,13 @@ pub struct Content {
 pub struct Part {
     pub text: String,
 }
+
+#[derive(Deserialize)]
+pub struct OllamaResponse {
+    pub response: String,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct PromptConfig {
+    pub prompt_template: String,
+}

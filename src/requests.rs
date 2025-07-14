@@ -3,7 +3,7 @@ use serde_json::json;
 
 use crate::{
     Provider,
-    schemas::{GeminiResponse, OpenAIResponse, UserMessage},
+    schemas::{GeminiResponse, OllamaResponse, OpenAIResponse, UserMessage},
 };
 
 use reqwest::blocking::Client;
@@ -78,6 +78,28 @@ pub fn handle_openai_request(
         .json()?;
 
     let raw_response = &response.choices[0].message.content;
+    println!("{}", raw_response);
+    Ok(())
+}
+
+pub fn handle_ollama_request(
+    client: &Client,
+    messages: &[UserMessage],
+    provider: Provider,
+) -> Result<()> {
+    let request_payload = json!({
+        "model": "llama-3.2-3b-instruct:latest",
+        "prompt": format!("{}\n{}", messages[0].content, messages[1].content),
+        "stream": false,
+    });
+
+    let response: OllamaResponse = client
+        .post(provider.api_url)
+        .json(&request_payload)
+        .send()?
+        .json()?;
+
+    let raw_response = &response.response;
     println!("{}", raw_response);
     Ok(())
 }

@@ -1,4 +1,5 @@
 use anyhow::Result;
+use std::fs;
 
 use clap::Parser;
 use dotenv::dotenv;
@@ -7,8 +8,8 @@ use std::env;
 
 use crate::{
     git::{Repository, diff, get_changed_files},
-    requests::{handle_gemini_request, handle_openai_request},
-    schemas::UserMessage,
+    requests::{handle_gemini_request, handle_ollama_request, handle_openai_request},
+    schemas::{PromptConfig, UserMessage},
 };
 
 mod git;
@@ -59,6 +60,15 @@ fn main() -> Result<()> {
                 api_key: None,
             }
         }
+        "ollama" => {
+            dotenv().ok();
+            let api_url = env::var("OLLAMA_API_URL")?;
+            Provider {
+                name: provider_name,
+                api_url: api_url,
+                api_key: None,
+            }
+        }
         _ => return Err(anyhow::anyhow!("Unknown provider: {}", provider_name)),
     };
 
@@ -72,11 +82,11 @@ fn main() -> Result<()> {
     });
 
     if !files.is_empty() {
+        let file_content = fs::read_to_string("prompt_template.yaml")?;
+        let prompt_config: PromptConfig = serde_yaml::from_str(&file_content)?;
         let system_msg = UserMessage {
             role: String::from("system"),
-            content: String::from(
-                "You are an AI assistant that generates concise, short and clear Git commit messages from code diffs: \n",
-            ),
+            content: format!("{}", prompt_config.prompt_template),
         };
 
         let send_msg = UserMessage {
@@ -87,11 +97,20 @@ fn main() -> Result<()> {
         let messages = vec![system_msg, send_msg];
 
         let client = Client::new();
-        if provider.name == "gemini" {
-            let _ = handle_gemini_request(&client, &messages, provider);
-        } else {
-            let _ = handle_openai_request(&client, &messages, provider);
-        }
+
+        match provider.name.as_str() {
+            "gemini" => {
+                let _ = handle_gemini_request(&client, &messages, provider);
+            }
+            "openai" => {
+                let _ = handle_openai_request(&client, &messages, provider);
+            }
+            "ollama" => {
+                let _ = handle_ollama_request(&client, &messages, provider);
+            }
+            _ => return Err(anyhow::anyhow!("Unknown provider: {}", provider.name)),
+        };
     }
+
     Ok(())
 }
