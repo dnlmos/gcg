@@ -1,7 +1,7 @@
 # 🚀 [G]it [C]ommit [G]enerate (gcg) — Auto-generate Git Commit Messages with AI
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Rust](https://img.shields.io/badge/Rust-1.70+-orange?logo=rust)](https://www.rust-lang.org/)
+[![Rust](https://img.shields.io/badge/Rust-1.88+-orange?logo=rust)](https://www.rust-lang.org/)
 
 gcg is a fast and lightweight CLI tool written in **Rust** that uses **LLMs** to automatically generate meaningful Git commit messages from your code changes.
 
