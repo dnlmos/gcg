@@ -50,7 +50,6 @@ pub struct OllamaResponse {
 pub struct Provider {
     pub name: String,
     pub api_url: String,
-    pub api_key: Option<String>,
     pub model: Option<String>,
 }
 

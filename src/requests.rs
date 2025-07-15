@@ -1,3 +1,4 @@
+use crate::get_api_key;
 use anyhow::Result;
 use serde_json::json;
 
@@ -21,11 +22,13 @@ pub fn handle_gemini_request(
 
     let request_payload = json!({ "contents": [ { "parts": [ { "text": msgs } ] } ], });
 
-    let api_endpoint = if let Some(key) = &provider.api_key {
-        format!("{}{}", provider.api_url, key)
-    } else {
-        provider.api_url.clone()
-    };
+    let api_key = get_api_key(String::from("gcg"), String::from("gemini_key"))?;
+    let api_endpoint = format!("{}{}", provider.api_url, api_key);
+
+    println!(
+        "Sending JSON:\n{}",
+        serde_json::to_string_pretty(&request_payload).unwrap()
+    );
 
     let response: GeminiResponse = client
         .post(api_endpoint)

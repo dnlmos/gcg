@@ -1,5 +1,5 @@
-use crate::schemas::Provider;
 use crate::utils::load_config;
+use crate::{schemas::Provider, utils::get_api_key};
 use anyhow::Result;
 use clap::Parser;
 use colored::*;
