@@ -5,6 +5,7 @@ use crate::{
     Provider,
     schemas::{GeminiResponse, OllamaResponse, OpenAIResponse, UserMessage},
 };
+use colored::*;
 
 use reqwest::blocking::Client;
 pub fn handle_gemini_request(
@@ -33,7 +34,7 @@ pub fn handle_gemini_request(
         .json()?;
 
     let raw_response = &response.candidates[0].content.parts[0].text;
-    println!("{}", raw_response);
+    print_response(raw_response);
     Ok(())
 }
 
@@ -78,7 +79,7 @@ pub fn handle_openai_request(
         .json()?;
 
     let raw_response = &response.choices[0].message.content;
-    println!("{}", raw_response);
+    print_response(raw_response);
     Ok(())
 }
 
@@ -100,6 +101,14 @@ pub fn handle_ollama_request(
         .json()?;
 
     let raw_response = &response.response;
-    println!("{}", raw_response);
+    print_response(raw_response);
     Ok(())
+}
+
+fn print_response(raw_response: &str) {
+    println!(
+        "{}\n{}",
+        "Generated Commit Message:".bright_green().bold(),
+        raw_response
+    );
 }
