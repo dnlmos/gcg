@@ -56,7 +56,7 @@ fn main() -> Result<()> {
 
     let system_msg = UserMessage {
         role: String::from("system"),
-        content: format!("{}", config.prompt_template),
+        content: config.prompt_template,
     };
 
     let send_msg = UserMessage {

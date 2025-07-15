@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 pub fn diff(repo: &Repository, files: &[String]) -> Result<String, git2::Error> {
     let mut ret = String::new();
     let idx = repo.index()?;
-    let files: Vec<_> = files.iter().map(|f| Path::new(f)).collect();
+    let files: Vec<_> = files.iter().map(Path::new).collect();
 
     // Get HEAD tree (if any)
     let head_tree = match repo.head() {
@@ -38,19 +38,17 @@ pub fn get_changed_files(repo: &Repository) -> Result<Vec<PathBuf>, Error> {
 
     let mut changed_files = Vec::new();
 
-    for diff in [&diff] {
-        diff.foreach(
-            &mut |delta, _| {
-                if let Some(path) = delta.new_file().path() {
-                    changed_files.push(path.to_path_buf());
-                }
-                true
-            },
-            None,
-            None,
-            None,
-        )?;
-    }
+    diff.foreach(
+        &mut |delta, _| {
+            if let Some(path) = delta.new_file().path() {
+                changed_files.push(path.to_path_buf());
+            }
+            true
+        },
+        None,
+        None,
+        None,
+    )?;
 
     Ok(changed_files)
 }

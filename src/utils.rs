@@ -6,11 +6,12 @@ use rpassword::read_password;
 
 use std::env;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use crate::schemas::Config;
 use crate::schemas::Provider;
-pub fn load_config(repo_path: &PathBuf) -> Result<Config> {
+
+pub fn load_config(repo_path: &Path) -> Result<Config> {
     // Define config file paths in priority order
     let config_paths = [
         repo_path.join("gcg.yaml"),                 // Project config
@@ -23,7 +24,7 @@ pub fn load_config(repo_path: &PathBuf) -> Result<Config> {
             Ok(content) => match serde_yaml::from_str::<Config>(&content) {
                 Ok(config) => return Ok(config),
                 Err(e) => {
-                    eprintln!("Warning: Failed to parse config at {:?}: {}", path, e);
+                    _ = format!("Warning: Failed to parse config at {{path.display()}}: {e}");
                     continue;
                 }
             },
@@ -39,7 +40,7 @@ pub fn get_xdg_config_home() -> PathBuf {
     let xdg_config_home = env::var("XDG_CONFIG_HOME").unwrap_or_else(|_| {
         // If XDG_CONFIG_HOME is not set, use the default path
         let home = env::var("HOME").unwrap_or_else(|_| String::from("/home/user")); // Fallback if HOME is also not set
-        format!("{}/.config", home)
+        format!("{home}/.config")
     });
 
     PathBuf::from(xdg_config_home)
@@ -88,7 +89,7 @@ pub fn get_api_key(service: String, key_name: String) -> Result<String> {
             // Store the API key securely
             let _ = entry.set_password(api_key.trim());
 
-            println!("✓ Saved {} API key to keyring", key_name);
+            println!("✓ Saved {key_name} API key to keyring");
             Ok(api_key.trim().to_string())
         }
     }

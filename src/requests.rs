@@ -25,10 +25,10 @@ pub fn handle_gemini_request(
     let api_key = get_api_key(String::from("gcg"), String::from("gemini_key"))?;
     let api_endpoint = format!("{}{}", provider.api_url, api_key);
 
-    println!(
-        "Sending JSON:\n{}",
-        serde_json::to_string_pretty(&request_payload).unwrap()
-    );
+    // println!(
+    //     "Sending JSON:\n{}",
+    //     serde_json::to_string_pretty(&request_payload).unwrap()
+    // );
 
     let response: GeminiResponse = client
         .post(api_endpoint)
@@ -97,10 +97,10 @@ pub fn handle_ollama_request(
         "stream": false,
     });
 
-    println!(
-        "Sending JSON:\n{}",
-        serde_json::to_string_pretty(&request_payload).unwrap()
-    );
+    // println!(
+    //     "Sending JSON:\n{}",
+    //     serde_json::to_string_pretty(&request_payload).unwrap()
+    // );
 
     let response: OllamaResponse = client
         .post(provider.api_url)
