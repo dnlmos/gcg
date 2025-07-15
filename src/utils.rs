@@ -1,4 +1,9 @@
 use anyhow::Result;
+
+use colored::*;
+use keyring::Entry;
+use rpassword::read_password;
+
 use std::env;
 use std::fs;
 use std::path::PathBuf;
@@ -45,11 +50,46 @@ pub fn get_default_config() -> Config {
         provider: Provider {
             name: "ollama".to_string(),
             api_url: "http://127.0.0.1:11434/api/generate".to_string(),
-            api_key: Some("".to_string()),
             model: Some("llama-3.2-3b-instruct:latest".to_string()),
         },
         prompt_template: String::from(
             " You are an AI assistant that generates concise, short and clear Git commit messages from code diffs.\n--- **Guidelines for Commit Messages:**\n* Start with a **type** (e.g., `feat`, `fix`, `docs`, `refactor`, `chore`) followed by a colon and a space, then the **subject**.\n * The subject line should be **imperative**, **50 characters or less**, and concisely describe the change.\n * Optionally, include a blank line followed by a **body** with bullet points (`-`). Each bullet point should clearly explain a specific aspect of the change.\n * Focus strictly on the changes presented in the diff.\n --- **Code Diff to Analyze:** ",
         ),
+    }
+}
+
+/// Get API key from keyring, prompting user if not found
+pub fn get_api_key(service: String, key_name: String) -> Result<String> {
+    let entry = Entry::new(&service, &key_name)?;
+
+    // Try to retrieve stored password
+    match entry.get_password() {
+        Ok(password) => Ok(password),
+        _ => {
+            // Prompt user
+            println!(
+                "{} API key for '{}' not found in keyring.",
+                "✗".red().bold(),
+                key_name.bright_green().bold()
+            );
+
+            print!(
+                "{} Please enter your {} API key: ",
+                "→".blue(),
+                key_name.yellow().bold()
+            );
+            std::io::Write::flush(&mut std::io::stdout())?;
+
+            let api_key = read_password()?;
+            if api_key.trim().is_empty() {
+                return Err(anyhow::anyhow!("API key cannot be empty"));
+            }
+
+            // Store the API key securely
+            let _ = entry.set_password(api_key.trim());
+
+            println!("✓ Saved {} API key to keyring", key_name);
+            Ok(api_key.trim().to_string())
+        }
     }
 }
