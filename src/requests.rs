@@ -94,6 +94,11 @@ pub fn handle_ollama_request(
         "stream": false,
     });
 
+    println!(
+        "Sending JSON:\n{}",
+        serde_json::to_string_pretty(&request_payload).unwrap()
+    );
+
     let response: OllamaResponse = client
         .post(provider.api_url)
         .json(&request_payload)
