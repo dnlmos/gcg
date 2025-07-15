@@ -1,10 +1,10 @@
 use anyhow::Result;
-use std::fs;
-
 use clap::Parser;
+use colored::*;
 use dotenv::dotenv;
 use reqwest::blocking::Client;
 use std::env;
+use std::fs;
 
 use crate::{
     git::{Repository, diff, get_changed_files},
@@ -87,36 +87,43 @@ fn main() -> Result<()> {
         });
     });
 
-    if !files.is_empty() {
-        let file_content = fs::read_to_string("prompt_template.yaml")?;
-        let prompt_config: PromptConfig = serde_yaml::from_str(&file_content)?;
-        let system_msg = UserMessage {
-            role: String::from("system"),
-            content: format!("{}", prompt_config.prompt_template),
-        };
-
-        let send_msg = UserMessage {
-            role: String::from("user"),
-            content: diff(&repo, &files).unwrap(),
-        };
-
-        let messages = vec![system_msg, send_msg];
-
-        let client = Client::new();
-
-        match provider.name.as_str() {
-            "gemini" => {
-                let _ = handle_gemini_request(&client, &messages, provider);
-            }
-            "openai" => {
-                let _ = handle_openai_request(&client, &messages, provider);
-            }
-            "ollama" => {
-                let _ = handle_ollama_request(&client, &messages, provider);
-            }
-            _ => return Err(anyhow::anyhow!("Unknown provider: {}", provider.name)),
-        };
+    if files.is_empty() {
+        println!("{}", "⚠️  No staged files found".bright_yellow().bold());
+        println!(
+            "{}",
+            "Hint: Use `git add <file>` to stage changes.".dimmed()
+        );
+        return Ok(());
     }
+
+    let file_content = fs::read_to_string("prompt_template.yaml")?;
+    let prompt_config: PromptConfig = serde_yaml::from_str(&file_content)?;
+    let system_msg = UserMessage {
+        role: String::from("system"),
+        content: format!("{}", prompt_config.prompt_template),
+    };
+
+    let send_msg = UserMessage {
+        role: String::from("user"),
+        content: diff(&repo, &files).unwrap(),
+    };
+
+    let messages = vec![system_msg, send_msg];
+
+    let client = Client::new();
+
+    match provider.name.as_str() {
+        "gemini" => {
+            let _ = handle_gemini_request(&client, &messages, provider);
+        }
+        "openai" => {
+            let _ = handle_openai_request(&client, &messages, provider);
+        }
+        "ollama" => {
+            let _ = handle_ollama_request(&client, &messages, provider);
+        }
+        _ => return Err(anyhow::anyhow!("Unknown provider: {}", provider.name)),
+    };
 
     Ok(())
 }
