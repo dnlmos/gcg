@@ -20,7 +20,11 @@ mod utils;
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
-    #[arg(short, long, default_value_t = String::from("."))]
+    #[arg(
+        help = "Path to the repository",
+        default_value = ".",
+        value_name = "REPO_PATH"
+    )]
     repo_path: String,
 }
 

@@ -29,22 +29,36 @@ cargo install --path .
 ```
 
 ## Set your API keys and endpoints:
-Create a .env file in the project root:
+You can provide a configuration file named `gcg.yaml` in one of the following locations:
+- In your project repository (local config)
+- In the global config directory: `$HOME/.config/gcg/`
+- Or rely on the default configuration shown below:
 
+```yaml
+provider:
+  name: "ollama"
+  api_url: "http://127.0.0.1:11434/api/generate"
+  model: "llama-3.2-3b-instruct:latest"
+prompt_template: |
+  You are an AI assistant that generates concise, short and clear Git commit messages from code diffs.
+
+  ---
+  **Guidelines for Commit Messages:**
+  * Start with a **type** (e.g., `feat`, `fix`, `docs`, `refactor`, `chore`) followed by a colon and a space, then the **subject**.
+  * The subject line should be **imperative**, **50 characters or less**, and concisely describe the change.
+  * Optionally, include a blank line followed by a **body** with bullet points (`-`). Each bullet point should clearly explain a specific aspect of the change.
+  * Focus strictly on the changes presented in the diff.
+  ---
+
+  **Code Diff to Analyze:**
 ```
-GEMINI_API_KEY="your_gemini_api_key"
-OPENAI_API_URL="http://127.0.0.1:1234/v1/chat/completions"
-OLLAMA_API_URL="http://127.0.0.1:11434/api/generate"
-```
-💡 You can use one or all of the providers. The tool will use the one you specify via CLI or configuration.
 
 ---
 
 ## Usage
 
 ```bash
-gcg "repo/path" -p gemini
-gcg "repo/path" -p ollama -m llama-3.2-3b-instruct:latest
+gcg "repo/path"
 ```
 
 ## Example response (based on the model)
