@@ -54,14 +54,14 @@ pub fn get_default_config() -> Config {
             model: Some("llama-3.2-3b-instruct:latest".to_string()),
         },
         prompt_template: String::from(
-            " You are an AI assistant that generates concise, short and clear Git commit messages from code diffs.\n--- **Guidelines for Commit Messages:**\n* Start with a **type** (e.g., `feat`, `fix`, `docs`, `refactor`, `chore`) followed by a colon and a space, then the **subject**.\n * The subject line should be **imperative**, **50 characters or less**, and concisely describe the change.\n * Optionally, include a blank line followed by a **body** with bullet points (`-`). Each bullet point should clearly explain a specific aspect of the change.\n * Focus strictly on the changes presented in the diff.\n --- **Code Diff to Analyze:** ",
+            "You are an AI assistant that generates concise, short and clear Git commit messages from code diffs.\n--- **Guidelines for Commit Messages:**\n* Start with a **type** (e.g., `feat`, `fix`, `docs`, `refactor`, `chore`) followed by a colon and a space, then the **subject**.\n * The subject line should be **imperative**, **50 characters or less**, and concisely describe the change.\n * Optionally, include a blank line followed by a **body** with bullet points (`-`). Each bullet point should clearly explain a specific aspect of the change.\n * Focus strictly on the changes presented in the diff.\n --- **Code Diff to Analyze:**",
         ),
     }
 }
 
 /// Get API key from keyring, prompting user if not found
-pub fn get_api_key(service: String, key_name: String) -> Result<String> {
-    let entry = Entry::new(&service, &key_name)?;
+pub fn get_api_key(service: &str, key_name: &str) -> Result<String> {
+    let entry = Entry::new(service, key_name)?;
 
     // Try to retrieve stored password
     match entry.get_password() {

@@ -22,28 +22,17 @@ mod utils;
 struct Args {
     #[arg(short, long, default_value_t = String::from("."))]
     repo_path: String,
-    // #[arg(short, long, default_value_t = String::from("gemini"))]
-    // provider: String,
-    // #[arg(short, long, default_value_t = String::from("llama-3.2-3b-instruct:latest"))]
-    // model: String,
 }
 
 fn main() -> Result<()> {
     let args = Args::parse();
-
     let repo_path = PathBuf::from(args.repo_path);
-    // let provider_name = args.provider;
-
     let config: Config = load_config(&repo_path)?;
-
-    let repo = Repository::open(&repo_path).unwrap();
-
-    let mut files: Vec<String> = Vec::new();
-    get_changed_files(&repo).iter().for_each(|path_bufs| {
-        path_bufs.iter().for_each(|changed_file| {
-            files.push(changed_file.display().to_string());
-        });
-    });
+    let repo = Repository::open(&repo_path)?;
+    let files: Vec<String> = get_changed_files(&repo)?
+        .iter()
+        .map(|path_buf| path_buf.display().to_string())
+        .collect();
 
     if files.is_empty() {
         println!("{}", "⚠️  No staged files found".bright_yellow().bold());
@@ -70,13 +59,13 @@ fn main() -> Result<()> {
 
     match config.provider.name.as_str() {
         "gemini" => {
-            let _ = handle_gemini_request(&client, &messages, config.provider);
+            handle_gemini_request(&client, &messages, config.provider)?;
         }
         "openai" => {
-            let _ = handle_openai_request(&client, &messages, config.provider);
+            handle_openai_request(&client, &messages, config.provider)?;
         }
         "ollama" => {
-            let _ = handle_ollama_request(&client, &messages, config.provider);
+            handle_ollama_request(&client, &messages, config.provider)?;
         }
         _ => {
             return Err(anyhow::anyhow!(

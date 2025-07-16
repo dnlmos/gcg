@@ -10,6 +10,6 @@ prompt_template: |
   * The subject line should be **imperative**, **50 characters or less**, and concisely describe the change.
   * Optionally, include a blank line followed by a **body** with bullet points (`-`). Each bullet point should clearly explain a specific aspect of the change.
   * Focus strictly on the changes presented in the diff.
-
   ---
+
   **Code Diff to Analyze:**

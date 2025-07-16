@@ -22,7 +22,7 @@ pub fn handle_gemini_request(
 
     let request_payload = json!({ "contents": [ { "parts": [ { "text": msgs } ] } ], });
 
-    let api_key = get_api_key(String::from("gcg"), String::from("gemini_key"))?;
+    let api_key = get_api_key("gcg", "gemini_key")?;
     let api_endpoint = format!("{}{}", provider.api_url, api_key);
 
     // println!(
