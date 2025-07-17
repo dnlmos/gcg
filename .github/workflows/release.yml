@@ -37,22 +37,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Install cargo-release
-        run: cargo install cargo-release
-
-      - name: Bump Rust version (patch) with cargo-release
-        run: cargo release patch --no-publish --no-push --no-tag
-
-      - name: Commit other changes (if any)
-        run: |
-          if [[ -n "$(git status --porcelain)" ]]; then
-            git add .
-            git commit -m "chore: prepare release - auto-commit"
-          else
-            echo "No changes to commit"
-          fi
-
-      - name: Run release-it
+      - name: Run release-it (auto bump version based on commit messages)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx release-it --ci

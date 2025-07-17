@@ -1,13 +1,21 @@
 {
+  "plugins": {
+    "@release-it/conventional-changelog": {
+      "preset": {
+        "name": "angular"
+      },
+      "infile": "CHANGELOG.md"
+    }
+  },
+ "npm": {
+    "publish": false
+  },
   "git": {
-    "tag": true,
     "commit": true,
+    "tag": true,
     "push": true
   },
   "github": {
     "release": true
-  },
-  "npm": {
-    "publish": false
   }
 }
