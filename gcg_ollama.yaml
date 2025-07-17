@@ -1,8 +1,12 @@
 provider:
-  name: "gemini"
-  api_url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+  name: "ollama"
+  api_url: "http://127.0.0.1:11434/api/generate"
+  model:
+    name: "llama-3.2-3b-instruct:latest"
+    temperature: 0.8
+    max_tokens: 1024
 prompt_template: |
-  You are an AI assistant that generates concise, short and clear Git commit messages from code diffs.
+  You are an AI assistant that generates concise, short and clear Git commit messages from code diffs. Generate commit message and nothing else.
 
   ---
   **Guidelines for Commit Messages:**

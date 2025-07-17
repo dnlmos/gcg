@@ -9,6 +9,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::schemas::Config;
+use crate::schemas::Model;
 use crate::schemas::Provider;
 
 pub fn load_config(repo_path: &Path) -> Result<Config> {
@@ -51,7 +52,11 @@ pub fn get_default_config() -> Config {
         provider: Provider {
             name: "ollama".to_string(),
             api_url: "http://127.0.0.1:11434/api/generate".to_string(),
-            model: Some("llama-3.2-3b-instruct:latest".to_string()),
+            model: Some(Model {
+                name: Some("llama-3.2-3b-instruct:latest".to_string()),
+                temperature: Some(0.8),
+                max_tokens: Some(100),
+            }),
         },
         prompt_template: String::from(
             "You are an AI assistant that generates concise, short and clear Git commit messages from code diffs.\n--- **Guidelines for Commit Messages:**\n* Start with a **type** (e.g., `feat`, `fix`, `docs`, `refactor`, `chore`) followed by a colon and a space, then the **subject**.\n * The subject line should be **imperative**, **50 characters or less**, and concisely describe the change.\n * Optionally, include a blank line followed by a **body** with bullet points (`-`). Each bullet point should clearly explain a specific aspect of the change.\n * Focus strictly on the changes presented in the diff.\n --- **Code Diff to Analyze:**",

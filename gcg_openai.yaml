@@ -1,6 +1,10 @@
 provider:
-  name: "gemini"
-  api_url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+  name: "openai"
+  api_url: "http://localhost:1234/v1/chat/completions"
+  model:
+    name: "llama-3.2-3b-instruct"
+    temperature: 0.8
+    max_tokens: 50
 prompt_template: |
   You are an AI assistant that generates concise, short and clear Git commit messages from code diffs.
 

@@ -30,6 +30,7 @@ cargo install --path .
 
 ## Set your API keys and endpoints:
 You can provide a configuration file named `gcg.yaml` in one of the following locations:
+
 - In your project repository (local config)
 - In the global config directory: `$HOME/.config/gcg/`
 - Or rely on the default configuration shown below:
