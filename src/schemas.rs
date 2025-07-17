@@ -46,7 +46,22 @@ pub struct OllamaResponse {
     pub response: String,
 }
 
+#[derive(Clone, Deserialize, Serialize)]
+pub struct Model {
+    pub name: Option<String>,
+    pub temperature: Option<f32>,
+    pub max_tokens: Option<u32>,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct Provider {
+    pub name: String,
+    pub api_url: String,
+    pub model: Option<Model>,
+}
+
 #[derive(Deserialize, Serialize)]
-pub struct PromptConfig {
+pub struct Config {
+    pub provider: Provider,
     pub prompt_template: String,
 }
