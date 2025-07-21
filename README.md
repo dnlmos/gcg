@@ -28,7 +28,7 @@ cd gcg
 cargo install --path .
 ```
 
-## Set your API keys and endpoints:
+## Set your config:
 You can provide a configuration file named `gcg.yaml` in one of the following locations:
 
 - In your project repository (local config)

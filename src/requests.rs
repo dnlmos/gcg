@@ -24,13 +24,6 @@ pub fn handle_gemini_request(
         .join("\n");
 
     let request_payload = json!({ "contents": [ { "parts": [ { "text": msgs } ] } ], });
-
-    // println!(
-    //     "{}\n{}",
-    //     "Sending JSON:".bright_green().bold(),
-    //     serde_json::to_string_pretty(&request_payload).unwrap()
-    // );
-
     let api_key = get_api_key("gcg", "gemini_key")?;
 
     let response: GeminiResponse = client
@@ -56,7 +49,6 @@ pub fn handle_openai_request(
         .as_ref()
         .and_then(|m| m.name.as_ref().cloned())
         .unwrap_or_else(|| "model".to_string());
-
     let temperature = provider.model.as_ref().and_then(|m| m.temperature);
     let max_tokens = provider.model.as_ref().and_then(|m| m.max_tokens);
 
