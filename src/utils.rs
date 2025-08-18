@@ -48,12 +48,13 @@ pub fn get_xdg_config_home() -> PathBuf {
 }
 
 pub fn get_default_config() -> Config {
-    Config {
+    // Build default config
+    let default_config = Config {
         provider: Provider {
             name: "ollama".to_string(),
             api_url: "http://127.0.0.1:11434/api/generate".to_string(),
             model: Some(Model {
-                name: Some("llama-3.2-3b-instruct:latest".to_string()),
+                name: Some("hf.co/unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF:Q4_K_M".to_string()),
                 temperature: Some(0.8),
                 max_tokens: Some(100),
             }),
@@ -61,7 +62,23 @@ pub fn get_default_config() -> Config {
         prompt_template: String::from(
             "You are an AI assistant that generates concise, short and clear Git commit messages from code diffs.\n--- **Guidelines for Commit Messages:**\n* Start with a **type** (e.g., `feat`, `fix`, `docs`, `refactor`, `chore`) followed by a colon and a space, then the **subject**.\n * The subject line should be **imperative**, **50 characters or less**, and concisely describe the change.\n * Optionally, include a blank line followed by a **body** with bullet points (`-`). Each bullet point should clearly explain a specific aspect of the change.\n * Focus strictly on the changes presented in the diff.\n --- **Code Diff to Analyze:**",
         ),
+    };
+
+    // Ensure global config directory exists
+    let global_path = get_xdg_config_home().join("gcg");
+    if !global_path.exists() {
+        fs::create_dir_all(&global_path).expect("Failed to create global config directory");
     }
+
+    // Write default config to file if it doesn't exist
+    let global_config_file = global_path.join("gcg.yaml");
+    if !global_config_file.exists() {
+        let yaml =
+            serde_yaml::to_string(&default_config).expect("Failed to serialize default config");
+        fs::write(&global_config_file, yaml).expect("Failed to write default config file");
+    }
+
+    default_config
 }
 
 /// Get API key from keyring, prompting user if not found

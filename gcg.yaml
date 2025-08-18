@@ -10,6 +10,15 @@ prompt_template: |
   * The subject line should be **imperative**, **50 characters or less**, and concisely describe the change.
   * Optionally, include a blank line followed by a **body** with bullet points (`-`). Each bullet point should clearly explain a specific aspect of the change.
   * Focus strictly on the changes presented in the diff.
+
+    Here’s one concise example per type:
+    Feature: feat: add user authentication with JWT
+    Bug Fix: fix: prevent crash when loading empty data
+    Documentation: docs: update README with setup instructions
+    Refactor: refactor: simplify user validation logic
+    Style: style: format code with Prettier
+    Test: test: add unit tests for login component
+    Chore: chore: update npm dependencies
   ---
 
   **Code Diff to Analyze:**
