@@ -11,9 +11,9 @@ gcg is a fast and lightweight CLI tool written in **Rust** that uses **LLMs** to
 
 - 🔍 Parses your `git diff` files and suggests a relevant commit message.
 - 🤖 Supports **multiple LLM providers**:
-  - Google **Gemini** (free tier)
+  - Google **Gemini** 
   - Local models via **Ollama**
-  - **OpenAI-compatible APIs** (Such as LM Studio)
+  - **OpenAI-compatible APIs**
 - ⚡ Fast and efficient — written in Rust
 
 ---
