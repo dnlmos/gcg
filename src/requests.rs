@@ -1,4 +1,4 @@
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Context, Result};
 
 use crate::{get_api_key, schemas::InteractionResponse};
 use serde_json::{Map, json};
@@ -6,7 +6,7 @@ use url::Url;
 
 use crate::{
     Provider,
-    schemas::{OllamaResponse, OpenAIResponse, UserMessage},
+    schemas::{OpenAIResponse, UserMessage},
 };
 use colored::*;
 
@@ -46,26 +46,14 @@ pub fn handle_openai_request(
     messages: &[UserMessage],
     provider: Provider,
 ) -> Result<()> {
-    let model_name = provider
-        .model
-        .as_ref()
-        .and_then(|m| m.name.as_ref().cloned())
-        .unwrap_or_else(|| "model".to_string());
-    let temperature = provider.model.as_ref().and_then(|m| m.temperature);
-    let max_tokens = provider.model.as_ref().and_then(|m| m.max_tokens);
+    let model_name = provider.model;
 
     let mut request_payload = Map::new();
 
     request_payload.insert("model".to_string(), json!(model_name));
     request_payload.insert("messages".to_string(), json!(messages));
 
-    if let Some(temp) = temperature {
-        request_payload.insert("temperature".to_string(), json!(temp));
-    }
-
-    if let Some(tokens) = max_tokens {
-        request_payload.insert("max_tokens".to_string(), json!(tokens));
-    }
+    let api_url = format!("{}/v1/chat/completions", provider.api_url);
 
     // Because OpenAI schema is also supported by Gemini models, determine which api_key to use
     // based on api url
@@ -73,7 +61,7 @@ pub fn handle_openai_request(
         Ok(key_name) => {
             let api_key = get_api_key("gcg", &key_name)?;
             client
-                .post(&provider.api_url)
+                .post(api_url)
                 .header("Content-type", "application/json")
                 .header("Authorization", format!("Bearer {api_key}"))
                 .json(&request_payload)
@@ -89,54 +77,6 @@ pub fn handle_openai_request(
     };
 
     let raw_response = &response.choices[0].message.content;
-    print_response(raw_response);
-    Ok(())
-}
-
-pub fn handle_ollama_request(
-    client: &Client,
-    messages: &[UserMessage],
-    provider: Provider,
-) -> Result<()> {
-    let model_name = provider
-        .model
-        .as_ref()
-        .and_then(|m| m.name.as_ref())
-        .ok_or_else(|| anyhow!("Model name must be provided for Ollama requests"))?;
-
-    let temperature = provider.model.as_ref().and_then(|m| m.temperature);
-    let max_tokens = provider.model.as_ref().and_then(|m| m.max_tokens);
-
-    let mut request_payload = Map::new();
-
-    request_payload.insert("model".to_string(), json!(model_name));
-    request_payload.insert("stream".to_string(), json!(false));
-    request_payload.insert(
-        "prompt".to_string(),
-        json!(format!("{}\n{}", messages[0].content, messages[1].content)),
-    );
-
-    // Add "options"
-    let mut options = serde_json::Map::new();
-    if let Some(temp) = temperature {
-        options.insert("temperature".to_string(), json!(temp));
-    }
-    if let Some(tokens) = max_tokens {
-        options.insert("num_ctx".to_string(), json!(tokens));
-    }
-
-    // Only add options if there are any
-    if !options.is_empty() {
-        request_payload.insert("options".to_string(), json!(options));
-    }
-
-    let response: OllamaResponse = client
-        .post(provider.api_url)
-        .json(&request_payload)
-        .send()?
-        .json()?;
-
-    let raw_response = &response.response;
     print_response(raw_response);
     Ok(())
 }

@@ -8,7 +8,7 @@ use std::path::PathBuf;
 
 use crate::{
     git::{Repository, diff, get_changed_files},
-    requests::{handle_gemini_request, handle_ollama_request, handle_openai_request},
+    requests::{handle_gemini_request, handle_openai_request},
     schemas::{Config, UserMessage},
 };
 
@@ -61,20 +61,17 @@ fn main() -> Result<()> {
 
     let client = Client::new();
 
-    match config.provider.name.as_str() {
+    match config.provider.schema.as_str() {
         "gemini" => {
             handle_gemini_request(&client, &messages, config.provider)?;
         }
         "openai" => {
             handle_openai_request(&client, &messages, config.provider)?;
         }
-        "ollama" => {
-            handle_ollama_request(&client, &messages, config.provider)?;
-        }
         _ => {
             return Err(anyhow::anyhow!(
                 "Unknown provider: {}",
-                config.provider.name
+                config.provider.schema
             ));
         }
     };

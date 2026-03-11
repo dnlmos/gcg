@@ -1,12 +1,9 @@
 provider:
-  name: "openai"
-  api_url: "http://localhost:1234/v1/chat/completions"
-  model:
-    name: "llama-3.2-3b-instruct"
-    temperature: 0.8
-    max_tokens: 50
+  api_url: "http://kbf-main:6969/api/generate"
+  schema: "openai"
+  model: "Qwen3.5-35B-A3B-Q4_K_M"
 prompt_template: |
-  You are an AI assistant that generates concise, short and clear Git commit messages from code diffs.
+  You are an AI assistant that generates concise, short and clear Git commit messages from code diffs. Generate commit message and nothing else.
 
   ---
   **Guidelines for Commit Messages:**
