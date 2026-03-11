@@ -1,12 +1,12 @@
 use anyhow::{Context, Result, anyhow};
 
-use crate::get_api_key;
+use crate::{get_api_key, schemas::InteractionResponse};
 use serde_json::{Map, json};
 use url::Url;
 
 use crate::{
     Provider,
-    schemas::{GeminiResponse, OllamaResponse, OpenAIResponse, UserMessage},
+    schemas::{OllamaResponse, OpenAIResponse, UserMessage},
 };
 use colored::*;
 
@@ -23,19 +23,21 @@ pub fn handle_gemini_request(
         .collect::<Vec<_>>()
         .join("\n");
 
-    let request_payload = json!({ "contents": [ { "parts": [ { "text": msgs } ] } ], });
+    let request_payload = json!({"model":"gemini-2.5-flash", "input": msgs});
     let api_key = get_api_key("gcg", "gemini_key")?;
 
-    let response: GeminiResponse = client
-        .post(provider.api_url)
-        .header("Content-type", "application/json")
-        .header("x-goog-api-key", api_key)
-        .json(&request_payload)
-        .send()?
-        .json()?;
+    let raw_response: InteractionResponse = serde_json::from_str(
+        &client
+            .post(provider.api_url)
+            .header("x-goog-api-key", api_key)
+            .json(&request_payload)
+            .send()?
+            .text()?,
+    )?;
 
-    let raw_response = &response.candidates[0].content.parts[0].text;
-    print_response(raw_response);
+    let (_, text) = raw_response.outputs;
+
+    print_response(&text.text);
     Ok(())
 }
 

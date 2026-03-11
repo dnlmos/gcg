@@ -1,6 +1,6 @@
 provider:
   name: "gemini"
-  api_url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+  api_url: "https://generativelanguage.googleapis.com/v1beta/interactions"
 prompt_template: |
   You are an AI assistant that generates concise, short and clear Git commit messages from code diffs.
 

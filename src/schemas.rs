@@ -15,30 +15,10 @@ pub struct ChatMessage {
     pub content: String,
 }
 
-#[derive(Serialize)] // to be able to convert to JSON
+#[derive(Serialize)]
 pub struct UserMessage {
     pub role: String,
     pub content: String,
-}
-
-#[derive(Deserialize)]
-pub struct GeminiResponse {
-    pub candidates: Vec<Candidate>,
-}
-
-#[derive(Deserialize)]
-pub struct Candidate {
-    pub content: Content,
-}
-
-#[derive(Deserialize)]
-pub struct Content {
-    pub parts: Vec<Part>,
-}
-
-#[derive(Deserialize)]
-pub struct Part {
-    pub text: String,
 }
 
 #[derive(Deserialize)]
@@ -51,6 +31,21 @@ pub struct Model {
     pub name: Option<String>,
     pub temperature: Option<f32>,
     pub max_tokens: Option<u32>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct InteractionResponse {
+    pub outputs: (Thought, Text),
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Text {
+    pub text: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Thought {
+    signature: String,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
